@@ -64,28 +64,13 @@
     );
   }
 
+  /* Accueil : le vortex SEUL. Aucun texte, aucune carte, aucun appel à
+     l'action — la composition est le sujet. La navigation et le panneau
+     physique restent accessibles (ils sont hors du conteneur de vues).
+     `bare: true` supprime en plus le voile radial et le couloir central :
+     sans texte à protéger, plus rien ne doit atténuer l'image. */
   function viewHome() {
-    return (
-      '<div class="view__band view__band--top">' +
-        '<p class="eyebrow">Vue strictement du dessus · palette bleue · rotation vers le centre</p>' +
-        '<h1 class="display">Le centre n\'est pas<br>un point, c\'est une <em>pente</em>.</h1>' +
-        '<p class="lede">Un vortex de Lamb–Oseen avec puits radial, intégré exactement : ' +
-          'la vitesse angulaire varie en 1/r², donc diviser le rayon par deux multiplie ' +
-          'la rotation par quatre. C\'est cette raideur qui produit l\'aspiration — ' +
-          'pas un effet ajouté par-dessus.</p>' +
-        '<div class="actions">' +
-          '<a class="btn btn--primary" href="#/projets">Voir les projets</a>' +
-          '<a class="btn" href="#/contact">Nous contacter</a>' +
-        '</div>' +
-      '</div>' +
-      '<div class="view__band view__band--bottom">' +
-        '<div class="grid grid--3">' +
-          card({ tag: 'Vue', title: 'Top-down strict', body: "Caméra verticale, on survole la surface. Aucune vue 3/4, aucun entonnoir visible : le creux hyperbolique se traduit uniquement par un dégradé radial et des caustiques concentriques.", meta: 'z_s(r) non projeté' }) +
-          card({ tag: 'Mouvement', title: 'Aspiration, jamais éjection', body: "v_r = −Q/(2πr) est négatif partout. Le rapport v_r/v_θ reste voisin de tan α, donc chaque trajectoire est une spirale logarithmique d'angle constant.", meta: 'α = atan(Q/Γ) ≈ 14°' }) +
-          card({ tag: 'Matière', title: 'Eau, pas galaxie', body: "Œil sombre, écume fine sur les bras, bulles qui spiralent et disparaissent près du cœur, traînées par fondu progressif — sans jamais une ligne nette.", meta: 'Canvas 2D · additif' }) +
-        '</div>' +
-      '</div>'
-    );
+    return '<div class="view__bare" aria-hidden="true"></div>';
   }
 
   function viewProjects() {
@@ -140,7 +125,7 @@
   }
 
   const VIEWS = {
-    '/': { title: 'Vortex — Accueil', render: viewHome, nav: 'accueil' },
+    '/': { title: 'Vortex', render: viewHome, nav: 'accueil', bare: true },
     '/projets': { title: 'Vortex — Projets', render: viewProjects, nav: 'projets' },
     '/contact': { title: 'Vortex — Contact', render: viewContact, nav: 'contact' }
   };

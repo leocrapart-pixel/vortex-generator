@@ -37,6 +37,8 @@
     document.title = view.title;
     mount.innerHTML = view.render();
     mount.dataset.route = path;
+    /* Route « nue » : ni voile radial ni couloir central réservé. */
+    mount.classList.toggle('is-bare', !!view.bare);
     bindView(mount, path);
     current = path;
     markNav(view.nav);

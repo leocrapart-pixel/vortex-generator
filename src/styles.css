@@ -602,6 +602,19 @@ body { overflow-x: hidden; }
   .card:hover, .btn:hover { transform: none; }
 }
 
+/* ============================================================ route « nue »
+   Accueil : le vortex seul. Sans texte à protéger, le voile radial et le
+   couloir central n'ont plus de raison d'être — ils atténueraient l'image
+   pour rien. Le canvas remplit alors tout l'écran, sans réserve. */
+.view.is-bare {
+  gap: 0;
+  padding: 0;
+}
+.view.is-bare > .view__bare {
+  min-height: 100svh;
+}
+body:has(.view.is-bare) .veil { display: none; }
+
 @media (prefers-contrast: more) {
   :root {
     --ink-soft: #cfe6fb;

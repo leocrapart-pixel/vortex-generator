@@ -378,19 +378,27 @@ section('5. Routeur : trois vues, 404, transitions');
   ok('normalisation : projets -> /projets', Router.normalize('projets') === '/projets');
   ok('normalisation : ?query retirée', Router.normalize('#/contact?x=1') === '/contact');
 
-  /* chaque vue produit du HTML non vide avec un h1 et pas de débordement */
   const Views = window.VortexViews;
-  let allOk = true, titles = [];
-  for (const key of ['/', '/projets', '/contact']) {
+
+  /* L'accueil est NUE : aucun texte, aucun contenu, juste un marqueur. */
+  const homeHtml = Views.VIEWS['/'].render();
+  ok('Accueil : aucun texte (pas de h1, pas de carte, pas de bouton)',
+     homeHtml.indexOf('<h1') < 0 && homeHtml.indexOf('class="card') < 0 &&
+     homeHtml.indexOf('class="btn') < 0 && homeHtml.indexOf('<p') < 0,
+     homeHtml.length + ' octets de HTML');
+  ok('Accueil : marqué `bare` (supprime voile et couloir central)',
+     Views.VIEWS['/'].bare === true);
+
+  /* Les deux autres vues gardent leur structure et protègent le centre. */
+  let allOk = true, titles = [Views.VIEWS['/'].title];
+  for (const key of ['/projets', '/contact']) {
     const html = Views.VIEWS[key].render();
     titles.push(Views.VIEWS[key].title);
     if (!html || html.length < 200) allOk = false;
     if (html.indexOf('<h1') < 0) allOk = false;
-    /* la contrainte de composition : pas de contenu au centre exact.
-       Chaque vue doit séparer bande haute et bande basse. */
     if (html.indexOf('view__band--top') < 0 || html.indexOf('view__band--bottom') < 0) allOk = false;
   }
-  ok('les 3 vues rendent un HTML structuré (h1 + bandes haut/bas)', allOk);
+  ok('Projets et Contact : HTML structuré (h1 + bandes haut/bas)', allOk);
   ok('chaque vue a un titre de document', titles.every(t => t && t.length > 3), titles.join(' · '));
 
   /* résolution de route */
@@ -406,7 +414,17 @@ section('5. Routeur : trois vues, 404, transitions');
   Router.apply(false);
   ok('le canvas n\'est jamais recréé par le routeur',
      document.getElementById('vortex') === vortexCanvas);
-  ok('le mount reçoit la vue accueil', nodes.view.innerHTML.indexOf('<h1') >= 0);
+  /* L'accueil est nu : on vérifie le marqueur ET la bascule `is-bare`,
+     qui est ce qui supprime le voile et le couloir central. */
+  ok('le mount reçoit la vue accueil (marqueur nu)',
+     nodes.view.innerHTML.indexOf('view__bare') >= 0);
+  ok('la classe is-bare est posée sur l\'accueil',
+     nodes.view.classList.contains('is-bare'));
+  /* et retirée sur une route à contenu */
+  window.location.hash = '#/contact';
+  Router.apply(false);
+  ok('la classe is-bare est retirée sur Contact',
+     !nodes.view.classList.contains('is-bare'));
 }
 
 /* ==================================================================== 6 */
@@ -490,14 +508,9 @@ section('7. Composition : protection du centre et lisibilité');
 section('8. Vues : contenu et formulaire');
 {
   const Views = window.VortexViews;
-  const home = Views.VIEWS['/'].render();
   const proj = Views.VIEWS['/projets'].render();
   const cont = Views.VIEWS['/contact'].render();
 
-  ok('Accueil : 3 cartes descriptives', (home.match(/class="card"/g) || []).length === 3,
-     (home.match(/class="card"/g) || []).length + ' cartes');
-  ok('Accueil : promesse + 2 appels à l\'action',
-     home.indexOf('display') > 0 && (home.match(/class="btn/g) || []).length >= 2);
   ok('Projets : 6 cartes de projets', (proj.match(/class="card"/g) || []).length === 6,
      (proj.match(/class="card"/g) || []).length + ' cartes');
   ok('Contact : formulaire avec 3 champs',
@@ -507,8 +520,8 @@ section('8. Vues : contenu et formulaire');
   ok('Contact : labels associés (for/id)',
      /for="cName"/.test(cont) && /id="cName"/.test(cont) &&
      /for="cMail"/.test(cont) && /for="cMsg"/.test(cont));
-  ok('aucune vue ne place de contenu hors des bandes',
-     [home, proj, cont].every(h => h.indexOf('view__band--top') > 0));
+  ok('les vues à contenu gardent tout dans les bandes (centre libre)',
+     [proj, cont].every(h => h.indexOf('view__band--top') > 0));
 }
 
 /* ================================================================ résumé */
