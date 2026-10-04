@@ -320,13 +320,13 @@ section('3. Boucle de simulation et de rendu (600 frames)');
      draws + ' drawImage');
   /* Le quad de traînée est sauté quand l'étirement est invisible (< 15 %) :
      sans ce saut on serait à exactement 2 drawImage par particule et par
-     frame. Le seuil tombe à r ≈ 0,92·R, soit ~34 % de la population, d'où
-     ~1,66 draw/particule. Cette borne verrouille l'optimisation : si elle
-     disparaît, le rapport remonte à 2,00 et le test échoue. */
+     frame. Borné à 1,90 — assez haut pour absorber la concentration de la
+     population dans le chenal (où les traînées sont visibles), assez bas
+     pour échouer si le saut disparaît et que le rapport repart à 2,00. */
   const framesRun = 600, particles = R.P.n;
   const perParticle = draws / framesRun / particles;
-  ok('les quads de traînée invisibles sont sautés (< 1,70 draw/particule vs 2,00)',
-     perParticle < 1.70,
+  ok('les quads de traînée invisibles sont sautés (< 1,90 draw/particule vs 2,00)',
+     perParticle < 1.90,
      perParticle.toFixed(2) + ' drawImage par particule et par frame');
   ok('aucune valeur non finie / taille invalide transmise à Canvas',
      badValues.length === 0,
@@ -355,6 +355,31 @@ section('3. Boucle de simulation et de rendu (600 frames)');
     for (let i = 0; i < P.n; i++) if (P.r[i] < field.cfg.rEye) n++;
     return n; })();
   ok('mais jamais DANS l\'œil (r < r_œil)', inEye === 0, inEye + ' particule(s)');
+
+  /* CONFINEMENT DES COURONNES : chaque particule reste dans la sienne.
+     C'est ce qui rend la répartition réglable — sans ce confinement, la
+     migration radiale redistribue tout le monde et le cœur redevient
+     4× plus clairsemé que la moyenne, quoi qu'on demande. */
+  const bands = field.cfg.bands;
+  let outside = 0, outBy = 0;
+  for (let i = 0; i < P.n; i++) {
+    const b = bands[P.band[i]];
+    if (!b) { outside++; continue; }
+    if (P.r[i] > b.b || P.r[i] < b.a * 0.98) { outside++; outBy = Math.max(outBy, P.r[i] - b.b); }
+  }
+  ok('chaque particule reste dans sa couronne (confinement)',
+     outside === 0, outside + ' hors couronne' + (outBy > 0 ? ' (max +' + outBy.toFixed(1) + ' px)' : ''));
+
+  /* et le chenal est réellement plus dense que la moyenne du disque */
+  let core = 0;
+  for (let i = 0; i < P.n; i++) if (P.r[i] < field.cfg.rCore * 2) core++;
+  const coreShare = core / P.n;
+  const coreAreaFrac = (4 - Math.pow(field.cfg.rEye / field.cfg.rCore, 2)) /
+                       Math.pow(field.cfg.R / field.cfg.rCore, 2);
+  ok('le cœur est plus dense que la moyenne (×2 au moins)',
+     coreShare / coreAreaFrac >= 2,
+     '×' + (coreShare / coreAreaFrac).toFixed(2) + ' · ' + (100 * coreShare).toFixed(0) +
+     '% de la population sur ' + (100 * coreAreaFrac).toFixed(1) + '% de la surface');
 }
 
 /* ==================================================================== 4 */
@@ -364,9 +389,12 @@ section('4. Densité adaptative et accessibilité');
   const n2 = R.chooseCount(true);
   const n3 = R.chooseCount(false);
   ok('densité réduite sous prefers-reduced-motion', n2 < n3, n3 + ' -> ' + n2 + ' particules');
-  ok('densité plafonnée (jamais plus de 2200)', n3 <= 2200, n3 + ' particules');
-  ok('densité plancher (jamais moins de 260)', n2 >= 260, n2 + ' particules');
+  ok('densité plafonnée (jamais plus de 5200)', n3 <= 5200, n3 + ' particules');
+  ok('densité plancher (jamais moins de 300)', n2 >= 300, n2 + ' particules');
   ok('nombre de particules initial cohérent', n1 === n3, n1 + ' = ' + n3);
+  /* 1440×900 doit donner une population nettement plus dense qu'avant
+     (864 particules à l'ancien réglage), sans exploser le nombre de draw. */
+  ok('densité desktop généreuse (≥ 1400 à 1440×900)', n3 >= 1400, n3 + ' particules');
 }
 
 /* ==================================================================== 5 */

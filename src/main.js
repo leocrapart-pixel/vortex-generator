@@ -37,8 +37,26 @@
     last: 0,
     avgDt: 16.7,
     fps: 60,
-    running: true
+    running: true,
+    ceiling: 0,        // nombre de particules voulu par chooseCount()
+    spend: 0,          // moyenne glissante de la charge par frame (ms)
+    cooldown: 0        // temporisation avant de remonter la densité
   };
+
+  /* Gouverneur de densité.
+     Le coût de la physique est négligeable (1,5 % du budget à 1800
+     particules) : ce qui coûte, ce sont les drawImage. Or je ne peux pas
+     mesurer le coût GPU d'une machine donnée — donc au lieu de figer un
+     nombre deviné, on part haut et on redescend si les frames débordent.
+     Asymétrie volontaire : on descend vite (une seule frame chargée suffit)
+     et on remonte lentement, sinon la densité oscille et ça se voit. */
+  const GOV = {
+    budgetMs: 12.5,     // au-delà, on réduit
+    recoverMs: 8.5,     // en dessous, on peut remonter
+    step: 0.12,         // réduction / augmentation par palier
+    cool: 6             // frames d'attente avant de remonter
+  };
+  let governorOn = true;
 
   /* ====================================================== simulation */
 
@@ -68,6 +86,7 @@
         probe.ter = P.ter[i] * wob;
         probe.kind = P.kind[i];
         probe.age = P.life[i];
+        probe.band = P.band[i];      // couronne de respawn
 
         const died = field.step(probe, h, rIn, rOut);
 
@@ -126,8 +145,33 @@
     /* --- rendu : une seule composition, ordre garanti par le renderer --- */
     R.frame(reduced ? 0.14 : KNOBS.fade, state.parX, state.parY);
 
+    govern(dtReal);
     updateHud();
     requestAnimationFrame(loop);
+  }
+
+  /* ====================================================== gouverneur */
+  function govern(dtReal) {
+    if (!governorOn) return;
+    const ms = dtReal * 1000;
+    /* moyenne glissante : on ignore les frames aberrantes (onglet qui
+       revient au premier plan, GC) pour ne pas réduire sur un accident. */
+    if (ms < 40) state.spend += (ms - state.spend) * 0.05;
+
+    const n = R.S.count;
+    if (state.spend > GOV.budgetMs && n > 300) {
+      /* sous 300 particules la spirale ne se lit plus : on s'arrête là
+         plutôt que de dégrader indéfiniment. */
+      R.S.count = Math.max(300, Math.round(n * (1 - GOV.step)));
+      state.spend = 0;                 // on repart d'une mesure propre
+      state.cooldown = GOV.cool;
+    } else if (state.spend < GOV.recoverMs && n < state.ceiling) {
+      if (state.cooldown > 0) state.cooldown--;
+      else {
+        R.S.count = Math.min(state.ceiling, Math.round(n * (1 + GOV.step)) + 1);
+        state.spend = 0;
+      }
+    }
   }
 
   /* ====================================================== HUD discret */
@@ -153,6 +197,7 @@
   }
 
   function applyKnobs() {
+    state.ceiling = R.chooseCount(reduced);
     R.S.userRate = KNOBS.rate;
     R.S.tanAlpha = KNOBS.tanAlpha;
     R.S.coreRatio = KNOBS.coreRatio;
@@ -254,6 +299,9 @@
     };
     if (mq.addEventListener) mq.addEventListener('change', onMq);
     else if (mq.addListener) mq.addListener(onMq);
+
+    state.ceiling = R.chooseCount(reduced);
+    state.spend = state.avgDt;
 
     requestAnimationFrame(loop);
   }

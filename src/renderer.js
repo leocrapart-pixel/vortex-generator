@@ -70,6 +70,7 @@
       sz: new Float32Array(MAXP),   // taille relative [0.5, 1.5]
       ter: new Float32Array(MAXP),  // amplitude de serpentement (px, à r=1)
       kind: new Uint8Array(MAXP),   // famille de sprite
+      band: new Uint8Array(MAXP),   // couronne d'origine (cible de respawn)
       life: new Float32Array(MAXP), // âge (s) — sert au fondu d'apparition
       n: 0
     };
@@ -207,18 +208,30 @@
     /* ====================================================== population */
 
     function spawnAll() {
-      const rOut = field.cfg.R * 1.12;
-      const rIn = field.cfg.rCore * 1.9;
       const n = S.count;
-      for (let i = 0; i < n; i++) initParticle(i, rIn, rOut, true);
+      const bands = field.cfg.bands;
+      for (let i = 0; i < n; i++) {
+        /* répartition par couronne, selon les parts demandées */
+        let band = 0, acc = 0, x = i / n;
+        for (let k = 0; k < bands.length; k++) {
+          acc += bands[k].share;
+          if (x < acc) { band = k; break; }
+          band = k;
+        }
+        initParticle(i, band, true);
+      }
       P.n = n;
     }
 
-    function initParticle(i, rIn, rOut, anywhere) {
-      /* répartition à peu près uniforme en surface (densité ∝ r dr) */
+    function initParticle(i, band, anywhere) {
+      const bands = field.cfg.bands || [];
+      const b = bands[band] || { a: field.cfg.rCore * 1.9, b: field.cfg.R * 1.12 };
+      const rIn = b.a, rOut = b.b;
+      /* tirage uniforme en SURFACE dans la couronne (densité ∝ r dr) */
       const u = Math.random();
       const rr = Math.sqrt(rIn * rIn + u * (rOut * rOut - rIn * rIn));
-      P.r[i] = anywhere ? rr : rOut * (0.86 + 0.14 * Math.random());
+      P.band[i] = band;
+      P.r[i] = rr;
       P.th[i] = Math.random() * TAU;
       P.ph[i] = Math.random();
       P.sd[i] = Math.random() * TAU;
@@ -239,13 +252,20 @@
       const mobile = /Mobi|Android|iPhone|iPad/i.test(
         (global.navigator && global.navigator.userAgent) || ''
       );
-      let n = Math.round(area / 1500);
-      if (small || mobile) n = Math.round(area / 2600);
-      n = clamp(n, 260, 2200);
-      if (mobile) n = Math.min(n, 520);
+      /* ~2,2× la densité précédente. La physique ne coûte que 1,5 % du
+         budget à 1800 particules : le plafond réel est le nombre de
+         drawImage, que le gouverneur de fréquence (main.js) ajuste en
+         direct si la machine ne suit pas. */
+      let n = Math.round(area / 660);
+      /* Mobile : diviseur plus grand (moins de particules) mais « plus
+         grand » que l'ancien — un diviseur calé sur la surface réduite
+         annulait purement et simplement l'augmentation de densité. */
+      if (small || mobile) n = Math.round(area / 950);
+      n = clamp(n, 300, 5200);
+      if (mobile) n = Math.min(n, 1200);
       /* mobile : moins de particules, plus grosses */
-      S.sizeBoost = small || mobile ? 1.55 : 1.0;
-      if (reduce) n = Math.round(n * 0.35);
+      S.sizeBoost = small || mobile ? 1.35 : 1.0;
+      if (reduce) n = Math.round(n * 0.30);
       return n;
     }
 
@@ -275,6 +295,7 @@
           probe.r = P.r[i]; probe.theta = P.th[i];
           probe.phase = P.ph[i]; probe.seed = P.sd[i];
           probe.ter = 0; probe.kind = P.kind[i]; probe.age = 0;
+          probe.band = P.band[i];
           field.step(probe, h, rIn, rOut);
           P.r[i] = probe.r; P.th[i] = probe.theta; P.kind[i] = probe.kind;
         }
