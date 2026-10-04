@@ -220,36 +220,19 @@ z_s(r)     → dégradé radial + caustiques concentriques
 
 ## 5. Performance
 
-Mesuré sur ce code (Node, `dt = 1/60`) :
+Mesuré sur ce code (Node, 864 particules, `dt = 1/60`) :
 
 ```
- 1964 particules  physique 0,27 ms / frame  →  1,6 % du budget de 16,67 ms
- 3142 particules  physique 0,35 ms / frame  →  2,1 %
- 4200 particules  physique 0,48 ms / frame  →  2,9 %
+physique : 0,0875 ms / frame   →  0,5 % du budget de 16,67 ms
 ```
 
-Le coût est donc dominé par les appels `drawImage` (≈ 1,74 par particule),
-pas par la simulation : multiplier la densité par 2,3 ne coûte que 1 % de
-budget en physique.
+Soit une marge très large : le coût est dominé par les appels `drawImage`
+(2 par particule), pas par la simulation.
 
-* Densité adaptative : surface d'écran, détection mobile, plafond 5200,
-  plancher 300, et **×0,30 sous `prefers-reduced-motion`**.
-  À 1920×1080 : 3142 particules · 1440×900 : 1964 · iPhone : 346.
-* **Gouverneur de fréquence** : je ne peux pas mesurer le coût GPU d'une
-  machine donnée, donc la densité n'est pas un nombre deviné. On part du
-  plafond et on redescend si les frames débordent (moyenne glissante,
-  budget 12,5 ms) — descente rapide, remontée lente pour éviter
-  l'oscillation. Plancher à 300 particules : en dessous la spirale ne se
-  lit plus, on préfère une image un peu saccadée à une image vide.
-* **Deux couronnes confinées** : 72 % dans le disque (1,5·r_c → bord) et
-  28 % dans le chenal (1,15·r_c → 1,5·r_c), où ω est maximale. Une particule
-  qui sort de sa couronne y est respawnée, au lieu d'attendre d'avoir
-  atteint l'œil. Sans ce confinement la répartition est fixée par la
-  physique seule — `n(r) ∝ r/(1 − e^(−r²/λ))` — et le cœur est 4× plus
-  clairsemé que la moyenne. C'est ce qui porte la population du cœur de
-  4 % à **30 %**, pour ×3,2 la densité surfacique.
-* **Pré-vieillissement** : 30 s simulées au démarrage, pas de 0,5 s (≈ 33 ms
-  pour 1964 particules), pour installer la répartition stationnaire
+* Densité adaptative : surface d'écran, détection mobile, plafond 2200,
+  plancher 260, et **×0,35 sous `prefers-reduced-motion`**.
+* **Pré-vieillissement** : 30 s simulées au démarrage, pas de 0,5 s (≈ 14 ms
+  pour 864 particules), pour installer la répartition stationnaire
   `n(r) ∝ r/(1 − e^(−r²/λ))`. Sans cela, les premières secondes montrent un
   cœur vide qui se remplit lentement — inacceptable pour un critère de
   5 secondes. Le pas large est légitime : l'intégration du rayon est exacte

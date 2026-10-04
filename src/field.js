@@ -70,15 +70,6 @@
   /* ------------------------------------------------------- config physique */
   function makeConfig() {
     return {
-      /* --- objectif artistique : RÉPARTITION des populations ---------------
-         Chaque particule garde une « bande » d'origine, et y retourne quand
-         elle atteint r_œil. Sans cela la répartition stationnaire est fixée
-         par la physique seule : n(r) ∝ r/(1 − e^(−r²/λ)), soit un cœur 4×
-         plus clairsemé que la moyenne. Les bandes découplent le rendu de
-         cette contrainte — elles ne touchent PAS au champ de vitesse, elles
-         décident seulement OÙ une particule réapparaît après un respawn. */
-      bands: null,     // rempli par resize() : [{a, b, share}]
-
       /* --- exposés au réglage artistique (panneau « Physique ») --- */
       gamma: 0,        // circulation  Γ     — vitesse globale / luminosité
       q: 0,            // débit du puits Q   — enroulement : tan α = Q/Γ
@@ -165,26 +156,6 @@
 
       cfg.alpha = Math.atan(tanA);
       cfg.kQ = cfg.q / TAU;
-
-      /* DEUX couronnes DISJOINTES et CONFINÉES (`a` < `b`) :
-           [0] le disque — de 1,5·r_c au bord, 72 % de la population
-           [1] le chenal — de 1,15·r_c à 1,5·r_c, 28 %
-
-         Une particule ne quitte jamais sa couronne : dès qu'elle sort de
-         [a, b] elle y est respawnée, au lieu d'attendre d'avoir atteint
-         l'œil. Sans ce confinement la couronne d'origine ne sert à rien —
-         la migration radiale redistribue tout le monde et la densité
-         revient à ce que la physique impose (cœur 4× plus clairsemé que la
-         moyenne). C'est ce confinement qui rend la répartition réglable.
-
-         Le chenal est la zone où ω est maximale et où l'étirement des
-         traînées dépasse 1,15 sur toute sa hauteur : c'est là que la
-         densité se voit le plus. */
-      const c0 = cfg.rCore, r0 = cfg.R;
-      cfg.bands = [
-        { a: c0 * 1.5, b: r0 * 1.12, share: 0.72 },
-        { a: c0 * 1.15, b: c0 * 1.5, share: 0.28 }
-      ];
       cfg.periodRim = TAU / omega(cfg.R);
       return cfg;
     }
@@ -304,31 +275,34 @@
       /* --- borne extérieure : les particules ne s'échappent jamais --- */
       if (p.r > rOut) p.r = rOut;
 
-      /* --- respawn -----------------------------------------------------
-         Deux déclencheurs :
-           · r < r_œil : la physique elle-même (le nombre de tours y
-             diverge, la viscosité et la tension de surface dominent) ;
-           · sortie de la couronne d'origine : confinement de la population,
-             pur choix de rendu.
-         Les deux ramènent la particule dans SA couronne. */
-      const b = cfg.bands && p.band != null ? cfg.bands[p.band] : null;
-      if (p.r < cfg.rEye || (b && (p.r > b.b || p.r < b.a * 0.98))) {
+      /* --- respawn : sous r_œil, la particule réapparaît en bordure ---
+         Physiquement : zone où viscosité et tension de surface dominent,
+         le nombre de tours y diverge. Indispensable : sans cette coupure,
+         θ diverge quand r → 0. */
+      if (p.r < cfg.rEye) {
         respawn(p, rIn, rOut);
         return true;
       }
       return false;
     }
 
-    /* Respawn : la particule retourne dans SA couronne, à un rayon tiré
-       uniformément en surface (u -> r²), donc sans accumulation artificielle
-       ni au bord ni au centre. `p.band` vient du renderer ; à défaut on
-       retombe sur l'ancienne borne [rIn, rOut]. */
+    /* Respawn en bordure : rayon tiré dans [rIn, rOut], angle quelconque.
+     *
+     * ÉCARTÉ VOLONTAIREMENT — ne pas réintroduire : confiner chaque particule
+     * dans une « couronne » d'origine (respawn dès qu'elle en sortait, au lieu
+     * d'attendre d'avoir atteint r_œil) rend la répartition réglable, mais
+     * l'œil lit immédiatement un ANNEAU net au lieu d'un vortex continu.
+     * C'était visible sur le site en production, et c'est un recul.
+     *
+     * La répartition est donc laissée à la physique seule :
+     * n(r) ∝ r/(1 − e^(−r²/λ)). Elle est 4× plus clairsemée au cœur, et c'est
+     * ce que le vortex doit montrer : un centre sombre et peu peuplé, pas un
+     * anneau brillant. Densifier le cœur passe par le NOMBRE total de
+     * particules ou par le rendu (éclat, traînée), jamais en trichant sur la
+     * répartition. */
     function respawn(p, rIn, rOut) {
-      const b = cfg.bands && p.band != null ? cfg.bands[p.band] : null;
-      const a = b ? b.a : rIn;
-      const z = b ? b.b : rOut;
       const u = Math.random();
-      p.r = Math.sqrt(a * a + u * (z * z - a * a));
+      p.r = Math.sqrt(rIn * rIn + u * (rOut * rOut - rIn * rIn));
       p.theta = Math.random() * TAU;
       p.age = 0;
       /* les sprites de bord sont les plus froids et les plus diffus */
