@@ -1,0 +1,618 @@
+/* ============================================================================
+ * styles.css — vortex vu du dessus
+ * ----------------------------------------------------------------------------
+ * DISCIPLINE DE PALETTE
+ *   Le bleu est la seule teinte. Bornes tenues partout :
+ *     teinte 224° (bleu nuit) -> 217° -> 205° -> 193° (cyan) -> blanc d'écume
+ *   Aucune valeur sous 190° (vert), aucune au-dessus de 230° (violet),
+ *   aucun élément chaud.
+ *
+ * COMPOSITION
+ *   Le vortex attire l'œil au centre : l'ellipse centrale est laissée libre.
+ *   Tout le contenu est repoussé dans les bandes haute et basse.
+ * ==========================================================================*/
+
+:root {
+  /* --- fond --- */
+  --bg-0: #030816;
+  --bg-1: #061a33;
+  --bg-2: #0a2a52;
+
+  /* --- courant --- */
+  --blue: #3b82f6;         /* h 217 */
+  --blue-lo: #2563eb;      /* h 221 */
+  --cyan: #67e8f9;         /* h 189 */
+  --cyan-dim: #38bdf8;     /* h 199 */
+
+  /* --- écume --- */
+  --foam: #cdf5ff;
+  --foam-hi: #e8f6ff;
+
+  /* --- texte --- */
+  --ink: #eaf6ff;
+  --ink-soft: #a8c8e8;
+  --ink-dim: #7ea6cc;      /* contraste ≥ 4.5:1 sur --bg-0 */
+
+  /* --- surfaces en verre dépoli --- */
+  --glass: rgba(9, 32, 62, 0.42);
+  --glass-hi: rgba(13, 45, 86, 0.55);
+  --line: rgba(103, 232, 249, 0.16);
+  --line-hi: rgba(103, 232, 249, 0.34);
+
+  --radius: 16px;
+  --radius-sm: 10px;
+
+  /* hauteur réservée au « couloir » central : le vortex reste visible */
+  --eye-safe: clamp(150px, 24vh, 300px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg-0);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { overflow-x: hidden; }
+
+/* ------------------------------------------------------------------ canvas
+   Fixe, plein écran, indépendant du contenu : changer de vue ne le touche
+   jamais. Le vortex est le fond de toute l'application. */
+#vortex {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  background: var(--bg-0);
+}
+
+/* Voile radial au-dessus du canvas : il protège la lisibilité sans masquer
+   le centre, qui reste l'élément le plus lumineux de la page. */
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 78% at 50% 50%,
+      rgba(3, 8, 22, 0) 0%,
+      rgba(3, 8, 22, 0.30) 42%,
+      rgba(3, 8, 22, 0.72) 74%,
+      rgba(2, 6, 16, 0.88) 100%),
+    linear-gradient(180deg,
+      rgba(3, 8, 22, 0.66) 0%,
+      rgba(3, 8, 22, 0.14) 22%,
+      rgba(3, 8, 22, 0.10) 62%,
+      rgba(2, 6, 16, 0.72) 100%);
+}
+
+/* ==================================================================== chrome */
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+.skip:focus {
+  left: 12px;
+  top: 12px;
+  z-index: 60;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--blue-lo);
+  color: #fff;
+  text-decoration: none;
+}
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px clamp(14px, 3.2vw, 40px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.brand__mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-hi);
+  background:
+    radial-gradient(circle at 50% 50%,
+      #01040c 0 22%,
+      rgba(59, 130, 246, 0.85) 24% 30%,
+      rgba(103, 232, 249, 0.55) 32% 38%,
+      rgba(59, 130, 246, 0.22) 40% 62%,
+      rgba(59, 130, 246, 0.05) 64% 100%);
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.35);
+}
+.brand__name { font-size: 0.95rem; }
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
+}
+.nav a {
+  position: relative;
+  padding: 8px 15px;
+  border-radius: 999px;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+.nav a:hover { color: var(--foam); background: rgba(59, 130, 246, 0.14); }
+.nav a.is-active {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.42), rgba(37, 99, 235, 0.30));
+  box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.28);
+}
+.nav a.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 16px;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: var(--cyan);
+}
+
+/* ==================================================================== vues */
+.view {
+  position: relative;
+  z-index: 10;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--eye-safe);         /* le couloir central laissé au vortex */
+  padding: 88px clamp(16px, 4vw, 64px) clamp(28px, 4vh, 56px);
+  transition: opacity 170ms ease, transform 170ms ease;
+}
+.view.is-leaving { opacity: 0; transform: translateY(6px); }
+.view.is-entering { opacity: 0; transform: translateY(-8px); }
+
+.view__band { max-width: 1180px; margin: 0 auto; width: 100%; }
+.view__band--left { text-align: left; margin-left: 0; }
+.view__band--top { text-align: center; }
+.view__band--bottom { padding-bottom: 4px; }
+
+/* ==================================================================== type */
+.eyebrow {
+  margin: 0 0 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--cyan-dim);
+}
+
+.display {
+  margin: 0 0 18px;
+  font-size: clamp(1.85rem, 5.4vw, 3.6rem);
+  line-height: 1.06;
+  letter-spacing: -0.028em;
+  font-weight: 700;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.display--sm { font-size: clamp(1.55rem, 3.6vw, 2.5rem); }
+.display em {
+  font-style: normal;
+  background: linear-gradient(180deg, var(--foam-hi) 0%, var(--cyan) 58%, var(--blue) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lede {
+  margin: 0 auto;
+  max-width: 60ch;
+  font-size: clamp(0.95rem, 1.6vw, 1.075rem);
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+.view__band--left .lede { margin-left: 0; }
+
+/* ================================================================= actions */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 26px;
+}
+.view__band--left .actions { justify-content: flex-start; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  min-height: 44px;                 /* cible tactile */
+  border: 1px solid var(--line-hi);
+  border-radius: 999px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--foam);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease,
+              background-color 150ms ease, border-color 150ms ease;
+}
+.btn:hover { transform: translateY(-1px); border-color: var(--cyan); }
+.btn:active { transform: translateY(0); }
+.btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+.btn--primary {
+  background: linear-gradient(180deg, var(--blue) 0%, var(--blue-lo) 100%);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 10px 30px -12px rgba(59, 130, 246, 0.85);
+}
+.btn--primary:hover { box-shadow: 0 14px 34px -10px rgba(103, 232, 249, 0.6); }
+.btn[disabled] { opacity: 0.6; cursor: progress; }
+
+/* ================================================================== cartes */
+.grid { display: grid; gap: 14px; }
+.grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.card {
+  position: relative;
+  padding: 20px 20px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--glass);
+  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  box-shadow: 0 18px 44px -26px rgba(1, 4, 10, 0.95);
+  overflow: hidden;
+  transition: border-color 180ms ease, transform 180ms ease,
+              background-color 180ms ease;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-hi), transparent);
+}
+.card:hover {
+  border-color: var(--line-hi);
+  background: var(--glass-hi);
+  transform: translateY(-2px);
+}
+
+.card__tag {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 232, 249, 0.24);
+  background: rgba(59, 130, 246, 0.16);
+  color: var(--cyan);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.card__title {
+  margin: 0 0 8px;
+  font-size: 1.02rem;
+  font-weight: 650;
+  color: var(--ink);
+  letter-spacing: -0.012em;
+}
+.card__body {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.card__meta {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* =================================================================ulaire */
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field--full { grid-column: 1 / -1; }
+
+.field label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cyan-dim);
+}
+.field input,
+.field textarea {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(3, 8, 22, 0.55);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+  resize: vertical;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.field input::placeholder,
+.field textarea::placeholder { color: var(--ink-dim); }
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.16);
+}
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
+  border-color: #7dd3fc;
+  box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.14);
+}
+.field__err {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--foam);
+}
+
+.form__foot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.form__status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.form__status.is-ok { color: var(--cyan); }
+.form__status.is-bad { color: var(--foam); }
+.form.is-sent { border-color: var(--line-hi); }
+
+/* ===================================================================== HUD */
+.hud {
+  position: fixed;
+  left: clamp(12px, 3vw, 40px);
+  bottom: 12px;
+  z-index: 20;
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-dim);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =================================================================== panneau
+   Réglages physiques exposés. Utile pour démontrer chaque paramètre du
+   modèle (Γ, Q, r_c, α, traînée) sans toucher au code. */
+.panel-toggle {
+  position: fixed;
+  right: clamp(12px, 3vw, 40px);
+  bottom: 12px;
+  z-index: 30;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line-hi);
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--cyan);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.panel-toggle:hover { border-color: var(--cyan); color: var(--foam); }
+.panel-toggle:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+.panel {
+  position: fixed;
+  right: clamp(12px, 3vw, 40px);
+  bottom: 62px;
+  z-index: 30;
+  width: min(310px, calc(100vw - 24px));
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(6, 26, 51, 0.78);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  box-shadow: 0 24px 60px -28px rgba(1, 4, 10, 0.95);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms;
+}
+.panel.is-open { opacity: 1; visibility: visible; transform: translateY(0); }
+
+.panel h2 {
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.panel p.panel__hint {
+  margin: 0 0 16px;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.panel .row { margin-bottom: 14px; }
+.panel .row__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.panel label {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.panel output {
+  font-size: 0.74rem;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+.panel input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+.panel input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--blue-lo), var(--cyan-dim));
+}
+.panel input[type="range"]::-moz-range-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--blue-lo), var(--cyan-dim));
+}
+.panel input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -6px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-0);
+  background: var(--cyan);
+  box-shadow: 0 0 10px rgba(103, 232, 249, 0.6);
+}
+.panel input[type="range"]::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-0);
+  background: var(--cyan);
+}
+.panel input[type="range"]:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ==================================================================== pied */
+.foot {
+  position: fixed;
+  right: clamp(12px, 3vw, 40px);
+  bottom: 20px;
+  z-index: 5;
+  font-size: 0.68rem;
+  color: var(--ink-dim);
+  pointer-events: none;
+}
+
+/* =============================================================== responsive */
+@media (max-width: 900px) {
+  .grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  :root { --eye-safe: clamp(130px, 22vh, 220px); }
+  .grid--3 { grid-template-columns: 1fr; }
+  .form { grid-template-columns: 1fr; padding: 18px; }
+  .view { padding-top: 78px; }
+  .view__band--top { text-align: left; }
+  .actions { justify-content: flex-start; }
+  .lede { margin-left: 0; }
+  .nav a { padding: 8px 12px; font-size: 0.82rem; }
+  .brand__name { display: none; }
+  .hud { display: none; }
+}
+
+/* Sur écran court, le couloir central se réduit : on garde le vortex
+   visible sans écraser le contenu. */
+@media (max-height: 640px) {
+  :root { --eye-safe: 90px; }
+  .view { padding-top: 72px; }
+}
+
+/* ============================================================ accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .view.is-leaving { opacity: 1; transform: none; }
+  .view.is-entering { opacity: 1; transform: none; }
+  .card:hover, .btn:hover { transform: none; }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-soft: #cfe6fb;
+    --ink-dim: #a9c9e6;
+    --glass: rgba(4, 14, 30, 0.78);
+    --line: rgba(103, 232, 249, 0.42);
+  }
+}
+
+/* ============================================================ feuille d'impression */
+@media print {
+  #vortex, .veil, .topbar, .hud, .panel, .panel-toggle, .foot { display: none; }
+  body { background: #fff; color: #000; }
+}

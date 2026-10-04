@@ -1,0 +1,13 @@
+{
+  "name": "vortex-generator",
+  "version": "1.0.0",
+  "description": "Vortex vu strictement du dessus — champ de Lamb–Oseen et puits radial, intégration analytique, rendu Canvas 2D, SPA à routeur hash. Zéro dépendance.",
+  "private": true,
+  "scripts": {
+    "test": "node tests/physics.test.js && node tests/dom.test.js",
+    "test:physics": "node tests/physics.test.js",
+    "test:dom": "node tests/dom.test.js"
+  },
+  "keywords": ["vortex", "lamb-oseen", "rankine", "canvas", "spa", "fluid"],
+  "license": "MIT"
+}

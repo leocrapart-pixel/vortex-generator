@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#030816">
+<title>Vortex — Accueil</title>
+<meta name="description" content="Vortex vu strictement du dessus : champ de Lamb–Oseen et puits radial, palette bleue, rotation continue vers le centre.">
+
+<link rel="stylesheet" href="src/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23030816'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%2301040c'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%233b82f6' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2367e8f9' stroke-width='1.5' opacity='.7'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- Le vortex : canvas fixe, plein écran, arrière-plan de toute la SPA.
+     Il n'est jamais détruit lors d'un changement de vue. -->
+<canvas id="vortex" aria-hidden="true"></canvas>
+
+<!-- Voile radial : protège la lisibilité du texte sans masquer le centre. -->
+<div class="veil" aria-hidden="true"></div>
+
+<a class="skip" href="#view">Aller au contenu</a>
+
+<header class="topbar">
+  <a class="brand" href="#/" aria-label="Vortex, retour à l'accueil">
+    <span class="brand__mark" aria-hidden="true"></span>
+    <span class="brand__name">Vortex</span>
+  </a>
+
+  <nav class="nav" aria-label="Navigation principale">
+    <a href="#/" data-nav="accueil">Accueil</a>
+    <a href="#/projets" data-nav="projets">Projets</a>
+    <a href="#/contact" data-nav="contact">Contact</a>
+  </nav>
+</header>
+
+<!-- Conteneur des vues : seul son contenu est remplacé par le routeur. -->
+<main class="view" id="view" tabindex="-1"></main>
+
+<p class="hud" id="hud" aria-hidden="true"></p>
+
+<button class="panel-toggle" id="panelToggle" type="button"
+        aria-expanded="false" aria-controls="panel"
+        title="Réglages physiques (P)">Γ</button>
+
+<aside class="panel" id="panel" aria-label="Réglages physiques">
+  <h2>Paramètres physiques</h2>
+  <p class="panel__hint">Chaque curseur correspond à une grandeur du modèle :
+     Γ (circulation), α = atan(Q/Γ) (enroulement), r_c (cœur), et la longueur
+     de traînée (fondu).</p>
+
+  <div class="row">
+    <div class="row__head">
+      <label for="kRate">Vitesse du cœur — Γ</label>
+      <output id="kRateOut" for="kRate">9.5 tr/min</output>
+    </div>
+    <input id="kRate" type="range" min="2" max="22" step="0.1" value="9.5">
+  </div>
+
+  <div class="row">
+    <div class="row__head">
+      <label for="kAlpha">Enroulement — α = atan(Q/Γ)</label>
+      <output id="kAlphaOut" for="kAlpha">14°</output>
+    </div>
+    <input id="kAlpha" type="range" min="0.05" max="0.75" step="0.005" value="0.25">
+  </div>
+
+  <div class="row">
+    <div class="row__head">
+      <label for="kCore">Rayon du cœur — r_c</label>
+      <output id="kCoreOut" for="kCore">16 % de R</output>
+    </div>
+    <input id="kCore" type="range" min="0.06" max="0.26" step="0.005" value="0.16">
+  </div>
+
+  <div class="row" style="margin-bottom:0">
+    <div class="row__head">
+      <label for="kTrail">Longueur de traînée</label>
+      <output id="kTrailOut" for="kTrail">moyennes</output>
+    </div>
+    <input id="kTrail" type="range" min="0.03" max="0.18" step="0.005" value="0.10">
+  </div>
+</aside>
+
+<p class="foot" aria-hidden="true">vue du dessus · λ–Oseen</p>
+
+<!-- Scripts classiques : aucun module ES, donc ouverture directe en file://
+     sans serveur et sans problème de CORS. -->
+<script src="src/field.js"></script>
+<script src="src/renderer.js"></script>
+<script src="src/views.js"></script>
+<script src="src/router.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>

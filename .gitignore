@@ -1,0 +1,19 @@
+# Le projet n'a AUCUNE dependance : ce fichier ne protege que des residus
+# locaux (outils, sauvegardes d'edition, secrets d'un futur deploiement).
+
+node_modules/
+.vercel/
+.env
+.env.*
+*.log
+
+# sauvegardes d'edition / d'audit
+*.bak
+*.orig
+*~
+.DS_Store
+Thumbs.db
+
+# editeurs
+.vscode/
+.idea/
