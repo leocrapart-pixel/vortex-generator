@@ -1,0 +1,8 @@
+# Le site publie n'a besoin que de index.html, src/ et de la documentation.
+# Le reste n'est pas servi : on ne l'envoie pas.
+tests/
+package.json
+package-lock.json
+.gitignore
+.vercelignore
+README.md
