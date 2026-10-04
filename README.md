@@ -6,6 +6,8 @@ rotation continue qui **aspire vers le centre**. Champ de vitesse analytique
 
 **Zéro dépendance. Zéro build. Ouverture directe en `file://`.**
 
+En ligne : <https://vortex-generator-lyart.vercel.app> — dépôt : <https://github.com/leocrapart-pixel/vortex-generator>
+
 ```
 index.html          ← ouvrir directement dans un navigateur (double-clic)
 src/field.js        ← physique : Lamb–Oseen, puits, intégration analytique
@@ -14,10 +16,25 @@ src/views.js        ← contenu des trois vues
 src/router.js       ← routeur SPA sur hash
 src/main.js         ← boucle, réglages, accessibilité
 src/styles.css      ← palette, verre dépoli, couloir central
-tests/              ← 107 vérifications exécutables (node, sans navigateur)
+tests/              ← 108 vérifications exécutables (node, sans navigateur)
 ```
 
 Pour lancer les vérifications : `npm test` (ou `node tests/physics.test.js`).
+
+## Déploiement
+
+Site statique, **aucune étape de build** : Vercel sert `index.html` et `src/`
+tels quels. Le framework est détecté comme « Other », la commande de build est
+vide, le dossier de sortie est la racine — rien à configurer.
+
+`.vercelignore` limite l'envoi aux fichiers réellement servis : les tests, le
+`package.json` et cette documentation ne sont pas téléversés (168 K → 77 K).
+
+Le projet Vercel est relié au dépôt GitHub : **chaque push sur `main`
+redéploie automatiquement** en production.
+
+En local, le site fonctionne aussi par simple ouverture de `index.html`
+(`file://`) : scripts classiques, aucun module ES, aucune requête réseau.
 
 ---
 
@@ -272,7 +289,7 @@ jamais (vérifié : l'identité de l'élément canvas est stable après navigati
 
 ## 9. Vérifications
 
-`npm test` exécute **107 assertions**, sans navigateur ni dépendance.
+`npm test` exécute **108 assertions**, sans navigateur ni dépendance.
 
 **`tests/physics.test.js` — 51 assertions**
 Rankine et continuité, identités exactes du profil (`ω(0) = ω₀`,
@@ -283,13 +300,14 @@ négative, annulation au centre, raideur `ω(r)/ω(2r) = 4,000`, respawn sur
 7,2 M de pas-particule, comparaison Euler naïf / schéma analytique,
 profondeur de surface, cohérence de bout en bout des paramètres.
 
-**`tests/dom.test.js` — 56 assertions**
+**`tests/dom.test.js` — 57 assertions**
 Exécute réellement les 5 scripts dans un DOM simulé : absence de gradient
 dans la boucle, DPR plafonné, 600 frames rendues avec **contrôle que
 chaque valeur transmise à Canvas est finie et de taille valide**, cœur
 peuplé dès la première frame, densité adaptative, normalisation des routes,
 404, transitions, **analyse de teinte de toutes les couleurs**, protection
-du centre, structure des trois vues.
+du centre, structure des trois vues, et le nombre de `drawImage` par
+particule — qui verrouille l'économie des quads de traînée invisibles.
 
 ---
 
